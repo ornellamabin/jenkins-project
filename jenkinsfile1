@@ -1,0 +1,58 @@
+pipline{
+    environement{
+        IMAGE_NAME = "alpinehelloworld"
+        IMAGE_TAG = "latest"
+        STAGING = "easytraining-staging"
+        PRODUCTION = "esaytraining-production"
+    }
+    agent none
+    stages{
+        stage('Build image')
+        agent any
+        steps{
+            script{
+                sh 'docker build -t easytraining/$IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
+    }
+}   stage('Run container based on builded image') {
+    agent any
+    steps {
+        script{
+        sh ' ' '
+            curl http://localhost | grep -q "hello world!"
+        ' ' '
+
+        }
+    }
+}
+stage('Clean Container') {
+    agent any
+    steps {
+        script {
+            sh ' ' '
+            docker stop $IMAGE_NAME
+            docker rm $IMAGE_NAME
+            '''
+        }
+    }
+}
+stage('Push image in staging and deploy it'){
+    when{
+        expression { GIT_BRANCH == 'origin/master' }
+    }
+    agent any
+    environement {
+        HEROKU_API_KEY = credentials('heroku_api_key')
+    }
+    steps {
+        script {
+            sh '''
+            heroku container:login
+            heroku create $STAGIN || echo "project already exist"
+            heroku container:push -a $STAGIN web
+            heroku container:release -a $STAGIN web
+            '''
+        }
+    }
+}
