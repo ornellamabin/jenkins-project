@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    ports:
+      - "8081:8080"       # Expose Jenkins sur le port 8081 de l’hôte
+      - "50000:50000"     # Port agent Jenkins
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: webapp
+    ports:
+      - "8085:5000"       # Ton app Python exposée sur 8085 de l’hôte
+    environment:
+      - PORT=5000
+
+volumes:
+  jenkins_home:
